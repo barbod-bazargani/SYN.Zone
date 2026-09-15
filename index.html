@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0906">
+<title>SYN ZONE — independent print from the far side of the network</title>
+<link rel="icon" href="assets/logo.png">
+<meta name="description" content="SYN ZONE — independent print from the far side of the network.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="loader" id="loader" aria-hidden="true">
+    <img class="loader-logo" id="loader-logo" src="assets/logo-thin.png" alt="SYN ZONE">
+  </div>
+
+  <div class="bg">
+    <video autoplay muted loop playsinline webkit-playsinline="true" disablePictureInPicture disableRemotePlayback preload="auto">
+      <source src="assets/hero-bg.mp4" type="video/mp4">
+    </video>
+  </div>
+
+  <div class="stage">
+
+    <div class="center">
+      <div class="countdown reveal d3" id="countdown" aria-live="polite">
+        <div class="cd-unit"><span class="cd-num" id="cd-d">00</span><span class="cd-label">Days</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-unit"><span class="cd-num" id="cd-h">00</span><span class="cd-label">Hrs</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-unit"><span class="cd-num" id="cd-m">00</span><span class="cd-label">Min</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-unit"><span class="cd-num" id="cd-s">00</span><span class="cd-label">Sec</span></div>
+      </div>
+      <p class="cd-date reveal d3">01/01/27 — 12:00</p>
+    </div>
+
+    <div class="remind-wrap reveal d3">
+      <button class="remind-btn" id="remind" type="button">Remind me</button>
+    </div>
+
+    <footer class="bottom reveal d3">
+      <nav class="social">
+        <a href="#">Instagram</a>
+        <a href="#">Journal</a>
+      </nav>
+    </footer>
+
+  </div>
+
+<script src="js/main.js"></script>
+</body>
+</html>
