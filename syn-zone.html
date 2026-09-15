@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0906">
+<title>SYN ZONE — independent print from the far side of the network</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#eceae3;
+    --ink:#141310;
+    --ink-soft:#c9c6bc;
+    --measure:64ch;
+    --font-mono:'Fira Code',ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+
+  html,body{
+    height:100%;
+    height:100dvh;
+    overflow:hidden;
+    overscroll-behavior:none;
+    touch-action:pan-x pan-y;
+  }
+  html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body{
+    background:#0a0906;
+    color:var(--paper);
+    font-family:var(--font-mono);
+    font-size:16px;line-height:1.5;
+  }
+  @supports (-webkit-touch-callout:none){
+    html,body{ height:-webkit-fill-available; }
+  }
+
+  /* ---------- video background ---------- */
+  .bg{
+    position:fixed;inset:0;z-index:0;
+    width:100%;height:100%;
+    overflow:hidden;
+    background:#0a0906;
+  }
+  .bg video{
+    position:absolute;inset:0;
+    width:100%;height:100%;
+    object-fit:cover;
+  }
+  .bg::after{
+    content:"";position:absolute;inset:0;
+    background:
+      linear-gradient(180deg, rgba(10,9,6,.55) 0%, rgba(10,9,6,.15) 30%, rgba(10,9,6,.25) 70%, rgba(10,9,6,.7) 100%);
+  }
+
+  /* faint print grain over everything */
+  body::after{
+    content:"";position:fixed;inset:0;z-index:3;pointer-events:none;
+    opacity:.06;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  a{color:inherit;text-decoration:none}
+
+  /* ---------- loading screen ---------- */
+  .loader{
+    position:fixed;inset:0;z-index:50;
+    background-color:#232a26;
+    background-image:url('assets/Background.png');
+    background-size:cover;background-position:center;background-repeat:no-repeat;
+    display:flex;align-items:center;justify-content:center;
+    transition:opacity .6s ease;
+  }
+  .loader-logo{
+    width:clamp(220px,55vw,560px);height:auto;
+  }
+  .loader.hide{
+    opacity:0;pointer-events:none;
+  }
+  @media (prefers-reduced-motion:reduce){
+    .loader{transition:none}
+  }
+
+  .remind-wrap{
+    position:absolute;z-index:2;
+    top:76%;left:0;right:0;
+    transform:translateY(-50%);
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+  }
+
+  .stage{
+    position:relative;z-index:2;
+    height:100%;
+    display:flex;flex-direction:column;
+    padding:calc(clamp(16px,3vh,40px) + env(safe-area-inset-top)) calc(clamp(20px,4vw,56px) + env(safe-area-inset-right)) calc(clamp(16px,3vh,40px) + env(safe-area-inset-bottom)) calc(clamp(20px,4vw,56px) + env(safe-area-inset-left));
+  }
+
+  /* ---------- center ---------- */
+  .center{
+    flex:1;
+    min-height:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;
+    gap:clamp(6px,1.2vmin,12px);
+    transform:translateY(clamp(12px,3vh,32px));
+  }
+  .tagline{
+    max-width:38ch;font-size:clamp(14px,1.6vw,17px);line-height:1.5;
+    color:var(--ink-soft);
+  }
+
+  /* ---------- countdown ---------- */
+  .countdown{
+    display:flex;align-items:baseline;gap:clamp(6px,1.3vmin,13px);
+    font-family:var(--font-mono);
+  }
+  .cd-unit{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .cd-num{
+    font-weight:600;letter-spacing:.12em;font-variant-numeric:tabular-nums;
+    font-size:clamp(8px,1.7vmin,11px);line-height:1;color:var(--paper);
+    padding-left:.12em; /* optically re-center the opened tracking */
+  }
+  .cd-label{
+    font-family:var(--font-mono);font-weight:500;
+    font-size:clamp(5px,1.1vmin,5.5px);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);
+  }
+  .cd-sep{
+    font-weight:600;font-size:clamp(7px,1.4vmin,9px);color:var(--paper);
+    transform:translateY(-2px);
+  }
+  .cd-date{
+    font-family:var(--font-mono);font-weight:500;
+    font-size:clamp(6px,1.5vmin,8px);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);
+  }
+
+  .remind-btn{
+    border:0.2px solid var(--paper);background:transparent;color:var(--paper);
+    font-family:var(--font-mono);font-weight:600;font-size:clamp(9px,1.8vmin,11px);letter-spacing:.12em;
+    text-transform:uppercase;
+    padding:clamp(9px,1.5vmin,12px) clamp(20px,3.4vmin,28px);cursor:pointer;
+    -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+    transition:background .18s,color .18s,border-color .18s,transform .05s;
+  }
+  .remind-btn:hover{background:var(--paper);border-color:var(--paper);color:var(--ink)}
+  .remind-btn:active{transform:translateY(1px)}
+  .remind-btn.done{border-color:var(--paper);color:var(--paper);background:transparent}
+
+  /* ---------- bottom bar ---------- */
+  .bottom{
+    flex-shrink:0;
+    display:flex;align-items:flex-end;justify-content:flex-end;gap:24px;
+    font-size:clamp(11px,2.6vmin,12px);color:var(--ink-soft);
+  }
+  .bottom .social{display:flex;gap:20px;flex-shrink:0}
+  .bottom .social a{padding:6px 0;display:inline-block}
+  .bottom .social a:hover{color:var(--paper)}
+  .scroll-hint{display:none}
+
+  /* ---------- load reveal (single moment) ---------- */
+  .reveal{opacity:0;transform:translateY(10px)}
+  .revealed .reveal{opacity:1;transform:none;transition:opacity .8s ease,transform .8s cubic-bezier(.2,.8,.2,1)}
+  .revealed .reveal.d1{transition-delay:.05s}
+  .revealed .reveal.d2{transition-delay:.18s}
+  .revealed .reveal.d3{transition-delay:.32s}
+
+  :focus-visible{outline:2px solid var(--paper);outline-offset:3px}
+
+  @media (max-width:640px){
+    .bottom{flex-direction:column;align-items:flex-end;gap:14px}
+    .bottom .social{gap:16px}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .reveal{opacity:1;transform:none;transition:none!important}
+  }
+</style>
+</head>
+<body>
+
+  <div class="loader" id="loader" aria-hidden="true">
+    <img class="loader-logo" id="loader-logo" src="assets/Logo Thin.png" alt="SYN ZONE">
+  </div>
+
+  <div class="bg">
+    <video autoplay muted loop playsinline webkit-playsinline="true" disablePictureInPicture disableRemotePlayback preload="auto">
+      <source src="assets/Comp 1_1.mp4" type="video/mp4">
+    </video>
+  </div>
+
+  <div class="stage">
+
+    <div class="center">
+      <div class="countdown reveal d3" id="countdown" aria-live="polite">
+        <div class="cd-unit"><span class="cd-num" id="cd-d">00</span><span class="cd-label">Days</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-unit"><span class="cd-num" id="cd-h">00</span><span class="cd-label">Hrs</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-unit"><span class="cd-num" id="cd-m">00</span><span class="cd-label">Min</span></div>
+        <span class="cd-sep">:</span>
+        <div class="cd-unit"><span class="cd-num" id="cd-s">00</span><span class="cd-label">Sec</span></div>
+      </div>
+      <p class="cd-date reveal d3">01/01/27 — 12:00</p>
+    </div>
+
+    <div class="remind-wrap reveal d3">
+      <button class="remind-btn" id="remind" type="button">Remind me</button>
+    </div>
+
+    <footer class="bottom reveal d3">
+      <nav class="social">
+        <a href="#">Instagram</a>
+        <a href="#">Journal</a>
+      </nav>
+    </footer>
+
+  </div>
+
+<script>
+(function(){
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---- loading screen: flickering logo, hold 2s then fade out ---- */
+  var loader = document.getElementById('loader');
+  var loaderLogo = document.getElementById('loader-logo');
+  if(loader){
+    var flickerOn = !reduce;
+    if(loaderLogo && flickerOn){
+      var curOp = 1, targetOp = 1, nextChange = 0;
+      function pickTarget(now){
+        var r = Math.random();
+        targetOp = r < 0.12 ? 0 : (r < 0.24 ? (0.25 + Math.random()*0.35) : 1);
+        nextChange = now + 70 + Math.random()*260;
+      }
+      pickTarget(0);
+      (function frame(now){
+        if(!flickerOn) return;
+        if(now >= nextChange) pickTarget(now);
+        curOp += (targetOp - curOp) * 0.12;
+        loaderLogo.style.opacity = curOp;
+        requestAnimationFrame(frame);
+      })(0);
+    }
+    setTimeout(function(){
+      flickerOn = false;
+      if(loaderLogo) loaderLogo.style.opacity = '1';
+      loader.classList.add('hide');
+      loader.addEventListener('transitionend', function(){ loader.remove(); }, {once:true});
+      if(reduce) loader.remove();
+    }, 2000);
+  }
+
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){ document.body.classList.add('revealed'); });
+  });
+
+  /* ---- countdown to release ---- */
+  var RELEASE = new Date(2027, 0, 1, 0, 0, 0); // 01/01/27 (DD/MM/YY), 12:00 (local time)
+  var elD = document.getElementById('cd-d'),
+      elH = document.getElementById('cd-h'),
+      elM = document.getElementById('cd-m'),
+      elS = document.getElementById('cd-s');
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function tick(){
+    var diff = RELEASE.getTime() - Date.now();
+    if(diff <= 0){
+      elD.textContent = elH.textContent = elM.textContent = elS.textContent = '00';
+      clearInterval(timer);
+      return;
+    }
+    var totalSec = Math.floor(diff/1000);
+    var days = Math.floor(totalSec / 86400);
+    var hours = Math.floor((totalSec % 86400) / 3600);
+    var mins = Math.floor((totalSec % 3600) / 60);
+    var secs = totalSec % 60;
+    elD.textContent = pad(days);
+    elH.textContent = pad(hours);
+    elM.textContent = pad(mins);
+    elS.textContent = pad(secs);
+  }
+  tick();
+  var timer = setInterval(tick, 1000);
+
+  /* ---- remind me: download calendar event + browser notification ---- */
+  var remindBtn = document.getElementById('remind');
+
+  function pad2(n){ return String(n).padStart(2,'0'); }
+  function toICSDate(d){
+    return d.getUTCFullYear()+pad2(d.getUTCMonth()+1)+pad2(d.getUTCDate())+'T'+
+           pad2(d.getUTCHours())+pad2(d.getUTCMinutes())+pad2(d.getUTCSeconds())+'Z';
+  }
+  function downloadICS(){
+    var end = new Date(RELEASE.getTime() + 60*60*1000);
+    var ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//SYN ZONE//Release Reminder//EN',
+      'CALSCALE:GREGORIAN',
+      'BEGIN:VEVENT',
+      'UID:synzone-release-'+RELEASE.getTime()+'@synzone.zine',
+      'DTSTAMP:'+toICSDate(new Date()),
+      'DTSTART:'+toICSDate(RELEASE),
+      'DTEND:'+toICSDate(end),
+      'SUMMARY:SYN ZONE — Issue release',
+      'DESCRIPTION:SYN ZONE drops today. Get your copy.',
+      'BEGIN:VALARM',
+      'TRIGGER:-PT1H',
+      'ACTION:DISPLAY',
+      'DESCRIPTION:SYN ZONE releases in 1 hour',
+      'END:VALARM',
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n');
+    var blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'syn-zone-release.ics';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  }
+
+  function fireNotification(){
+    if(location.protocol === 'file:'){ return; }
+    if(!('Notification' in window)){ return; }
+    var show = function(){
+      try{
+        new Notification('SYN ZONE', {
+          body: 'Reminder added — issue drops 01/01/27, 12:00.'
+        });
+      }catch(e){}
+    };
+    if(Notification.permission === 'granted'){ show(); }
+    else if(Notification.permission !== 'denied'){
+      Notification.requestPermission().then(function(perm){
+        if(perm === 'granted') show();
+      });
+    }
+  }
+
+  if(remindBtn){
+    remindBtn.addEventListener('click', function(){
+      downloadICS();
+      remindBtn.classList.add('done');
+      remindBtn.textContent = 'Added to calendar ✓';
+      fireNotification();
+    });
+  }
+})();
+</script>
+</body>
+</html>
