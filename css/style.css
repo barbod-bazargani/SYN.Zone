@@ -37,12 +37,6 @@ body{
   width:100%;height:100%;
   object-fit:cover;
 }
-.bg::after{
-  content:"";position:absolute;inset:0;
-  background:
-    linear-gradient(180deg, rgba(10,9,6,.55) 0%, rgba(10,9,6,.15) 30%, rgba(10,9,6,.25) 70%, rgba(10,9,6,.7) 100%);
-}
-
 /* faint print grain over everything */
 body::after{
   content:"";position:fixed;inset:0;z-index:3;pointer-events:none;
