@@ -10,6 +10,7 @@
 html,body{
   height:100%;
   height:100dvh;
+  height:var(--app-height, 100dvh);
   overflow:hidden;
   overscroll-behavior:none;
   touch-action:pan-x pan-y;
@@ -21,14 +22,11 @@ body{
   font-family:var(--font-mono);
   font-size:16px;line-height:1.5;
 }
-@supports (-webkit-touch-callout:none){
-  html,body{ height:-webkit-fill-available; }
-}
-
 /* ---------- video background ---------- */
 .bg{
   position:fixed;inset:0;z-index:0;
   width:100%;height:100%;
+  height:var(--app-height, 100%);
   overflow:hidden;
   background:#0a0906;
 }
@@ -101,7 +99,7 @@ a{color:inherit;text-decoration:none}
 .cd-unit{display:flex;flex-direction:column;align-items:center;gap:3px}
 .cd-num{
   font-weight:600;letter-spacing:.12em;font-variant-numeric:tabular-nums;
-  font-size:clamp(8px,1.7vmin,11px);line-height:1;color:var(--paper);
+  font-size:clamp(10px,2vmin,13px);line-height:1;color:var(--paper);
   padding-left:.12em; /* optically re-center the opened tracking */
 }
 .cd-label{
@@ -119,7 +117,7 @@ a{color:inherit;text-decoration:none}
 
 .remind-btn{
   border:0.2px solid var(--paper);background:transparent;color:var(--paper);
-  font-family:var(--font-mono);font-weight:600;font-size:clamp(9px,1.8vmin,11px);letter-spacing:.12em;
+  font-family:var(--font-mono);font-weight:600;font-size:clamp(10px,2vmin,13px);letter-spacing:.12em;
   text-transform:uppercase;
   padding:clamp(9px,1.5vmin,12px) clamp(20px,3.4vmin,28px);cursor:pointer;
   -webkit-tap-highlight-color:transparent;touch-action:manipulation;
