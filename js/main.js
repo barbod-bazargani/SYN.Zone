@@ -1,6 +1,32 @@
 (function(){
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  /* ---- real viewport height (mobile browser chrome breaks 100dvh in some webviews) ---- */
+  function setAppHeight(){
+    document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+  }
+  setAppHeight();
+  window.addEventListener('resize', setAppHeight);
+  window.addEventListener('orientationchange', setAppHeight);
+
+  /* ---- background video: force autoplay, retry if a webview blocks it ---- */
+  var bgVideo = document.querySelector('.bg video');
+  if(bgVideo){
+    bgVideo.muted = true;
+    bgVideo.defaultMuted = true;
+    var tryPlay = function(){
+      var p = bgVideo.play();
+      if(p && p.catch) p.catch(function(){});
+    };
+    tryPlay();
+    document.addEventListener('visibilitychange', function(){
+      if(!document.hidden) tryPlay();
+    });
+    ['touchstart','click'].forEach(function(evt){
+      document.addEventListener(evt, tryPlay, {passive:true});
+    });
+  }
+
   /* ---- loading screen: flickering logo, hold 2s then fade out ---- */
   var loader = document.getElementById('loader');
   var loaderLogo = document.getElementById('loader-logo');
